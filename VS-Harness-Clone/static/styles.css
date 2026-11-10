@@ -165,7 +165,7 @@ kbd { padding: 3px 5px; border: 1px solid #3b3b3b; border-radius: 3px; backgroun
   .editor { grid-template-rows: 36px 36px minmax(100px, 1fr) 220px 23px; }
 }
 @media (max-width: 1000px) {
-  .workbench { grid-template-columns: 43px 175px minmax(275px, 1fr); }
+  .workbench { grid-template-columns: 43px minmax(250px, .9fr) minmax(300px, 1.1fr); }
   .explorer { display: none; }
   .editor { grid-template-rows: 36px 36px minmax(100px, 1fr) 160px 23px; }
 }

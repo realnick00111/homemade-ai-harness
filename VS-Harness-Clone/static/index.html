@@ -11,9 +11,9 @@
 <body>
   <div class="app">
     <header class="titlebar">
-      <a class="brand" href="/" aria-label="Home"><span class="brand-mark">\u2318</span><span>AI Harness</span></a>
-      <div class="window-title"><span id="project-name">Opening workspace…</span><span class="title-divider">\u203a</span><span>AI Assistant</span></div>
-      <div class="title-actions"><span class="connection-dot" id="connection-dot"></span><span id="connection-label">Connecting</span><button class="icon-button" id="new-chat" title="Start a new chat" aria-label="Start a new chat">\uff0b</button></div>
+      <a class="brand" href="/" aria-label="Home"><span class="brand-mark">&#x2318;</span><span>AI Harness</span></a>
+      <div class="window-title"><span id="project-name">Opening workspace…</span><span class="title-divider">&#x203A;</span><span>AI Assistant</span></div>
+      <div class="title-actions"><span class="connection-dot" id="connection-dot"></span><span id="connection-label">Connecting</span><button class="icon-button" id="new-chat" title="Start a new chat" aria-label="Start a new chat">&#xFF0B;</button></div>
     </header>
 
     <div class="workbench">
@@ -24,25 +24,45 @@
       </nav>
 
       <aside class="explorer">
-        <div class="section-heading">EXPLORER <button class="quiet-button" id="refresh-files" title="Refresh files">\u21bb</button></div>
-        <button class="tree-heading"><span class="chevron">\u2304</span><span id="tree-project-name">WORKSPACE</span></button>
+        <div class="section-heading">EXPLORER <button class="quiet-button" id="refresh-files" title="Refresh files">&#x21BB;</button></div>
+        <button class="tree-heading"><span class="chevron">&#x2304;</span><span id="tree-project-name">WORKSPACE</span></button>
         <div class="file-tree" id="file-tree"><div class="loading-note">Loading project files…</div></div>
-        <div class="explorer-bottom"><span class="chevron">\u2304</span> OUTLINE</div>
+        <div class="explorer-bottom"><span class="chevron">&#x2304;</span> OUTLINE</div>
       </aside>
 
+      <section class="chat-panel" aria-label="Assistant chat">
+        <div class="panel-heading"><span>CHAT</span><button class="quiet-button" id="clear-chat" title="Clear chat" aria-label="Clear chat">&#x232B;</button></div>
+        <label class="model-row"><span class="model-indicator"></span><select id="model-select" aria-label="Model"><option>Loading models…</option></select></label>
+        <div class="conversation" id="conversation">
+          <div class="welcome" id="welcome">
+            <div class="welcome-icon">&#x2733;</div>
+            <div class="welcome-title">Build with your local AI</div>
+            <p>Ask a question or describe a change. The assistant will inspect your project, make real edits, and show each diff.</p>
+            <button class="suggestion" data-prompt="Explore this project and give me a concise overview."><span>&#x2197;</span> Explore this project</button>
+          </div>
+        </div>
+        <div class="composer-wrap">
+          <div class="composer">
+            <textarea id="prompt-input" placeholder="Ask a question or describe a task…" aria-label="Message" rows="3"></textarea>
+            <div class="composer-footer"><span class="composer-hint">Enter to send · Shift+Enter for newline</span><button class="send-button" id="send-button" type="button" aria-label="Send message" title="Send message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></button></div>
+          </div>
+          <div class="privacy-note"><span>&#x25CF;</span> Runs locally with Ollama</div>
+        </div>
+      </section>
+
       <main class="editor">
-        <div class="editor-tabs"><div class="editor-tab active"><span class="tab-icon">\u2733</span> AI Session <span class="tab-close">\u00d7</span></div><div class="editor-tab-spacer"></div><button class="quiet-button" id="toggle-activity" title="Toggle assistant activity">\u2637</button></div>
-        <div class="editor-toolbar"><div class="breadcrumbs">AI Harness <span>\u203a</span> <span id="active-file-label">Session</span></div><div class="task-controls"><button id="cancel-task" class="cancel-button" type="button" hidden>Stop task</button><span id="task-status" class="task-status"><i></i> Ready</span></div></div>
+        <div class="editor-tabs"><div class="editor-tab active"><span class="tab-icon">&#x2733;</span> AI Session <span class="tab-close">&#x00D7;</span></div><div class="editor-tab-spacer"></div><button class="quiet-button" id="toggle-activity" title="Toggle assistant activity">&#x2637;</button></div>
+        <div class="editor-toolbar"><div class="breadcrumbs">AI Harness <span>&#x203A;</span> <span id="active-file-label">Session</span></div><div class="task-controls"><button id="cancel-task" class="cancel-button" type="button" hidden>Stop task</button><span id="task-status" class="task-status"><i></i> Ready</span></div></div>
         <section class="editor-content">
-          <div id="empty-editor" class="empty-editor"><div class="welcome-orbit"><span>\u2733</span></div><h1>Your workspace, with an agent</h1><p>Describe a task in chat. Your assistant’s real tool activity and code changes will appear here.</p><div class="shortcut-hint"><kbd>Ctrl</kbd><span>+</span><kbd>Enter</kbd><span>to send a task</span></div></div>
-          <div id="change-view" class="change-view" hidden><div class="change-tabs" id="change-tabs" role="tablist" aria-label="Changed files"></div><div class="change-header"><div class="change-title-row"><span class="filetype-icon" id="change-file-icon">JS</span><strong id="change-file-name">\u2014</strong><span id="change-counts" class="change-counts"></span></div><span id="change-path" class="change-path"></span></div><div id="change-list" class="diff"></div></div>
-          <div id="editor-container" class="editor-container" style="display:none;flex:1;display:flex;flex-direction:column;overflow:auto;padding:10px;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;color:#9a9a9a;font-size:12px;">\u2733 File content</div>
+          <div id="empty-editor" class="empty-editor"><div class="welcome-orbit"><span>&#x2733;</span></div><h1>Your workspace, with an agent</h1><p>Describe a task in chat. Your assistant’s real tool activity and code changes will appear here.</p><div class="shortcut-hint"><kbd>Ctrl</kbd><span>+</span><kbd>Enter</kbd><span>to send a task</span></div></div>
+          <div id="change-view" class="change-view" hidden><div class="change-tabs" id="change-tabs" role="tablist" aria-label="Changed files"></div><div class="change-header"><div class="change-title-row"><span class="filetype-icon" id="change-file-icon">JS</span><strong id="change-file-name">&#x2014;</strong><span id="change-counts" class="change-counts"></span></div><span id="change-path" class="change-path"></span></div><div id="change-list" class="diff"></div></div>
+          <div id="editor-container" class="editor-container">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;color:#9a9a9a;font-size:12px;">&#x2733; File content</div>
             <pre id="file-content-display" class="code-viewer" style="flex:1;background:#181818;border:1px solid #2b2b2b;color:#d0d0d0;font-family:Consolas,'Courier New',monospace;font-size:12px;line-height:1.5;white-space:pre-wrap;overflow:auto;padding:8px;border-radius:4px;"></pre>
           </div>
         </section>
-        <section class="activity-panel" id="activity-panel"><div class="activity-panel-heading"><span>ASSISTANT ACTIVITY</span><button class="quiet-button" id="clear-activity" title="Clear activity">\u232b</button></div><div id="activity-list" class="activity-list"><div class="activity-empty"><span>\u25f7</span> Activity will appear when you start a task.</div></div></section>
-        <footer class="statusbar"><span class="status-remote">\u2442 <span id="status-project">Local workspace</span></span><span><span id="status-connection">\u25c9 Ollama</span><span> UTF-8</span><span> Python</span></span></footer>
+        <section class="activity-panel" id="activity-panel"><div class="activity-panel-heading"><span>ASSISTANT ACTIVITY</span><button class="quiet-button" id="clear-activity" title="Clear activity">&#x232B;</button></div><div id="activity-list" class="activity-list"><div class="activity-empty"><span>&#x25F7;</span> Activity will appear when you start a task.</div></div></section>
+        <footer class="statusbar"><span class="status-remote">&#x2442; <span id="status-project">Local workspace</span></span><span><span id="status-connection">&#x25C9; Ollama</span><span> UTF-8</span><span> Python</span></span></footer>
       </main>
     </div>
   </div>

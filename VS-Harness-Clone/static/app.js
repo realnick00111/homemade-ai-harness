@@ -21,6 +21,7 @@ const elements = {
   projectHeading: $("#tree-project-name"),
   send: $("#send-button"),
   cancel: $("#cancel-task"),
+  statusProject: $("#status-project"),
   statusConnection: $("#status-connection"),
   editorContainer: $("#editor-container"),
   fileContentDisplay: $("#file-content-display"),
@@ -119,18 +120,16 @@ function renderFiles(files) {
       label.className = "tree-file-name";
       label.textContent = file.name;
       row.append(icon, label);
-      if (changes.has(file.path)) {
-        row.tabIndex = 0;
-        row.setAttribute("role", "button");
-        row.title = `Show changes in ${file.path}`;
-        row.addEventListener("click", () => renderDiff(changes.get(file.path)));
-        row.addEventListener("keydown", (event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            renderDiff(changes.get(file.path));
-          }
-        });
-      }
+      row.tabIndex = 0;
+      row.setAttribute("role", "button");
+      row.title = changes.has(file.path) ? `Show changes in ${file.path}` : `Open ${file.path}`;
+      row.addEventListener("click", () => switchToDiffOrContent(file.path));
+      row.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          switchToDiffOrContent(file.path);
+        }
+      });
       elements.files.append(row);
     }
   }
@@ -194,7 +193,7 @@ async function renderDiff(change) {
   changedFiles.add(change.path);
   elements.empty.hidden = true;
   elements.changeView.hidden = false;
-  elements.editorContainer.style.display = "flex";
+  elements.editorContainer.style.display = "none";
   if (elements.fileContentDisplay) {
     elements.fileContentDisplay.textContent = "";
   }
@@ -393,26 +392,20 @@ function switchToDiff(path) {
   }
 }
 
-function switchToFileContent(path) {
-  loadFileContent(path).then(content => {
-    elements.fileContentDisplay.textContent = content || (elements.fileContentDisplay.textContent || "");
-  }).catch(error => {
+async function switchToFileContent(path) {
+  elements.empty.hidden = true;
+  elements.changeView.hidden = true;
+  elements.editorContainer.style.display = "flex";
+  elements.activeFileLabel.textContent = path;
+  try {
+    elements.fileContentDisplay.textContent = await loadFileContent(path);
+  } catch (error) {
     chatMessage("assistant", `Error loading file: ${error.message}`, true);
-  });
+  }
 }
 
 async function openFileInEditor(path) {
-  if (!changes.has(path)) {
-    const response = await fetch(`/api/file?path=${encodeURIComponent(path)}`);
-    if (!response.ok) {
-      const data = await response.json();
-      activity(`Could not read file ${path}: ${data.error || 'Unknown error'}`, "failure");
-      return;
-    }
-    switchToFileContent(path);
-  } else {
-    switchToFileContent(path);
-  }
+  await switchToFileContent(path);
 }
 
 async function switchToDiffOrContent(path) {
