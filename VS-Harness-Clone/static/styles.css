@@ -46,7 +46,7 @@ button { color: inherit; }
 .tree-heading { height: 28px; display: flex; align-items: center; gap: 5px; padding: 0 10px; border: 0; background: transparent; text-align: left; font-size: 10px; font-weight: 600; letter-spacing: .45px; cursor: pointer; }
 .chevron { color: #858585; font-size: 12px; }
 .file-tree { overflow: auto; padding: 0 7px 10px 14px; }
-.tree-row { display: flex; align-items: center; min-width: 0; height: 24px; gap: 6px; color: #bbb; font-size: 12px; white-space: nowrap; }
+.tree-row { display: flex; align-items: center; min-width: 0; height: 24px; gap: 6px; color: #bbb; font-size: 12px; white-space: nowrap; cursor: pointer; }
 .tree-row.directory { color: #bbb; }
 .tree-row.changed { color: #d7ba7d; }
 .tree-row.selected { background: #2a2d2e; }
@@ -103,6 +103,10 @@ button { color: inherit; }
 .breadcrumbs > span { color: #777; }
 .task-status { display: flex; align-items: center; gap: 6px; color: #909090; font-size: 10px; }
 .task-status i { width: 6px; height: 6px; border-radius: 50%; background: #81b88b; }
+.task-controls { display: flex; align-items: center; gap: 10px; }
+.cancel-button { padding: 4px 9px; border: 1px solid #6b3b3b; border-radius: 4px; background: #3a2424; color: #e6a1a1; font-size: 10px; cursor: pointer; }
+.cancel-button:hover { background: #512e2e; }
+.cancel-button:disabled { opacity: .6; cursor: wait; }
 .task-status.running i { background: #d7ba7d; animation: pulse 1.15s ease-in-out infinite; }
 .task-status.error i { background: #e88787; }
 @keyframes pulse { 50% { box-shadow: 0 0 0 4px #d7ba7d22; opacity: .6; } }
@@ -125,6 +129,8 @@ kbd { padding: 3px 5px; border: 1px solid #3b3b3b; border-radius: 3px; backgroun
 .filetype-icon { width: 18px; height: 18px; display: grid; place-items: center; border: 1px solid #414141; border-radius: 4px; color: #9dcaec; font-size: 8px; }
 .change-counts { font-family: Consolas, monospace; font-size: 10px; }
 .change-path { overflow: hidden; color: #777; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.editor-container { display: none; flex: 1; }
+.code-viewer { flex: 1; background: #181818; border: 1px solid #2b2b2b; color: #d0d0d0; font-family: Consolas, 'Courier New', monospace; font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow: auto; padding: 8px; border-radius: 4px; }
 .diff { overflow-x: auto; padding: 9px 0 24px; }
 .diff-line { display: flex; min-height: 21px; padding-right: 10px; font-family: Consolas, "Courier New", monospace; font-size: 11px; line-height: 21px; white-space: pre; }
 .diff-line.addition { background: #1837288c; color: #9bd5a6; }

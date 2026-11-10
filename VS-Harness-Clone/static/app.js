@@ -20,8 +20,10 @@ const elements = {
   project: $("#project-name"),
   projectHeading: $("#tree-project-name"),
   send: $("#send-button"),
+  cancel: $("#cancel-task"),
   statusConnection: $("#status-connection"),
-  statusProject: $("#status-project"),
+  editorContainer: $("#editor-container"),
+  fileContentDisplay: $("#file-content-display"),
 };
 let sessionId = sessionStorage.getItem("harness-session") || crypto.randomUUID();
 sessionStorage.setItem("harness-session", sessionId);
@@ -37,7 +39,7 @@ function activity(message, className = "", detail = "") {
   row.className = `activity-entry ${className}`;
   const icon = document.createElement("span");
   icon.className = "activity-symbol";
-  icon.textContent = className === "failure" ? "×" : className === "success" ? "✓" : "◦";
+  icon.textContent = className === "failure" ? "\u00d7" : className === "success" ? "\u2713" : "\u25e6";
   const label = document.createElement("span");
   label.className = "activity-label";
   label.textContent = message;
@@ -63,7 +65,7 @@ function chatMessage(role, text, isError = false) {
   heading.className = "message-heading";
   const avatar = document.createElement("span");
   avatar.className = `avatar${role === "user" ? " user-avatar" : ""}`;
-  avatar.textContent = role === "user" ? "N" : "✳";
+  avatar.textContent = role === "user" ? "N" : "\u2733";
   heading.append(avatar, document.createTextNode(role === "user" ? "You" : "Assistant"));
   const body = document.createElement("div");
   body.className = "message-body";
@@ -75,7 +77,7 @@ function chatMessage(role, text, isError = false) {
 
 function fileIcon(path) {
   const ext = path.split(".").pop().toLowerCase();
-  return ({ py: "Py", ts: "TS", tsx: "TS", js: "JS", jsx: "JS", css: "CS", html: "HT", md: "M", json: "{}", yml: "⚙", yaml: "⚙" })[ext] || "·";
+  return ({ py: "Py", ts: "TS", tsx: "TS", js: "JS", jsx: "JS", css: "CS", html: "HT", md: "M", json: "{}", yml: "\u2699", yaml: "\u2699" })[ext] || "\u00b7";
 }
 
 function renderFiles(files) {
@@ -97,7 +99,7 @@ function renderFiles(files) {
       row.style.paddingLeft = `${depth * 11}px`;
       const arrow = document.createElement("span");
       arrow.className = "tree-glyph";
-      arrow.textContent = "⌄";
+      arrow.textContent = "\u2304";
       const label = document.createElement("span");
       label.className = "tree-file-name";
       label.textContent = name;
@@ -151,36 +153,51 @@ async function loadStatus() {
     elements.projectHeading.textContent = name.toUpperCase();
     elements.statusProject.textContent = name;
     renderFiles(data.files);
-    elements.model.replaceChildren();
-    const models = data.models.includes("qwen3.5:9b") ? data.models : [data.model, ...data.models];
-    for (const model of [...new Set(models)]) {
-      const option = document.createElement("option");
-      option.value = model;
-      option.textContent = model + (model === data.model ? " · default" : "");
-      elements.model.append(option);
+    if (elements.model) {
+      elements.model.replaceChildren();
+      const models = data.models.includes("qwen3.5:9b") ? data.models : [data.model, ...data.models];
+      for (const model of [...new Set(models)]) {
+        const option = document.createElement("option");
+        option.value = model;
+        option.textContent = model + (model === data.model ? " \u00b7 default" : "");
+        elements.model.append(option);
+      }
+      elements.model.value = data.model;
     }
-    elements.model.value = data.model;
     const connected = data.connected && data.model_available;
     elements.connectionDot.className = `connection-dot ${connected ? "connected" : "error"}`;
     elements.connection.textContent = !data.connected ? "Ollama unavailable" :
       data.model_available ? "Ollama connected" : `${data.model} not installed`;
-    elements.statusConnection.textContent = connected ? "◉ Ollama connected" : "◉ Ollama unavailable";
+    elements.statusConnection.textContent = connected ? "\u25c9 Ollama connected" : "\u25c9 Ollama unavailable";
     if (!connected) activity(data.error || `${data.model} is not installed. Start Ollama and run ollama pull ${data.model}.`, "failure");
   } catch (error) {
     elements.connectionDot.className = "connection-dot error";
     elements.connection.textContent = "Ollama unavailable";
-    elements.statusConnection.textContent = "◉ Ollama unavailable";
+    elements.statusConnection.textContent = "\u25c9 Ollama unavailable";
     elements.files.textContent = error.message;
     activity(error.message, "failure");
   }
 }
 
-function renderDiff(change) {
+async function loadFileContent(path) {
+  const response = await fetch(`/api/file?path=${encodeURIComponent(path)}`);
+  if (!response.ok) {
+    const data = await response.json();
+    throw new Error(data.error || `Failed to load file (${response.status}).`);
+  }
+  return response.text();
+}
+
+async function renderDiff(change) {
   const isNewChange = !changes.has(change.path);
   changes.set(change.path, change);
   changedFiles.add(change.path);
   elements.empty.hidden = true;
   elements.changeView.hidden = false;
+  elements.editorContainer.style.display = "flex";
+  if (elements.fileContentDisplay) {
+    elements.fileContentDisplay.textContent = "";
+  }
   elements.changeTabs.replaceChildren();
   for (const [path, fileChange] of changes) {
     const tab = document.createElement("button");
@@ -192,7 +209,7 @@ function renderDiff(change) {
     name.textContent = path.split("/").at(-1);
     const counts = document.createElement("span");
     counts.className = "change-tab-counts";
-    counts.textContent = `+${fileChange.added} −${fileChange.removed}`;
+    counts.textContent = `+${fileChange.added} \u2212${fileChange.removed}`;
     tab.append(name, counts);
     tab.addEventListener("click", () => renderDiff(changes.get(path)));
     elements.changeTabs.append(tab);
@@ -207,7 +224,7 @@ function renderDiff(change) {
   addCount.textContent = `+${change.added} `;
   const removeCount = document.createElement("span");
   removeCount.style.color = "#e88787";
-  removeCount.textContent = `−${change.removed}`;
+  removeCount.textContent = `\u2212${change.removed}`;
   elements.changeCounts.append(addCount, removeCount);
   elements.changeList.replaceChildren();
   let oldNumber = 0;
@@ -231,7 +248,7 @@ function renderDiff(change) {
       newNumber++;
     } else if (line.startsWith("-")) {
       type = "deletion";
-      marker = "−";
+      marker = "\u2212";
       text = line.slice(1);
       oldNumber++;
     } else {
@@ -257,13 +274,36 @@ function renderDiff(change) {
 
 function setBusy(next) {
   busy = next;
-  elements.send.disabled = next;
-  elements.prompt.disabled = next;
+  if (elements.send) elements.send.disabled = next;
+  if (elements.prompt) elements.prompt.disabled = next;
+  if (elements.cancel) {
+    elements.cancel.hidden = !next;
+    elements.cancel.disabled = false;
+  }
   elements.assistantStatus.className = `task-status${next ? " running" : ""}`;
   elements.assistantStatus.innerHTML = next ? "<i></i> Working" : "<i></i> Ready";
 }
 
-async function sendMessage(text = elements.prompt.value) {
+async function cancelTask() {
+  if (!busy || !elements.cancel) return;
+  elements.cancel.disabled = true;
+  try {
+    const response = await fetch("/api/cancel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sessionId }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || `Stop request failed (HTTP ${response.status}).`);
+    if (!data.cancelled) throw new Error("No running task was found to stop.");
+    activity("Stop requested");
+  } catch (error) {
+    activity(error.message, "failure");
+    elements.cancel.disabled = false;
+  }
+}
+
+async function sendMessage(text = elements.prompt?.value || "") {
   if (busy || !text.trim()) return;
   const message = text.trim();
   elements.prompt.value = "";
@@ -303,15 +343,15 @@ async function sendMessage(text = elements.prompt.value) {
             break;
           case "tool_started":
             {
-              const origin = event.origin === "user_request" ? " · requested by you" :
-                event.origin === "verification" ? " · verification" : "";
-              const label = `${event.tool.replaceAll("_", " ")} · ${event.label}${origin}`;
+              const origin = event.origin === "user_request" ? " \u00b7 requested by you" :
+                event.origin === "verification" ? " \u00b7 verification" : "";
+              const label = `${event.tool.replaceAll("_", " ")} \u00b7 ${event.label}${origin}`;
               elements.assistantStatus.innerHTML = `<i></i> ${label}`;
               activity(label);
             }
             break;
           case "tool_completed":
-            activity(`${event.tool.replaceAll("_", " ")} · ${event.label}`, event.success ? "success" : "failure", event.result);
+            activity(`${event.tool.replaceAll("_", " ")} \u00b7 ${event.label}`, event.success ? "success" : "failure", event.result);
             if (!event.success) elements.assistantStatus.className = "task-status error";
             break;
           case "change":
@@ -342,8 +382,49 @@ async function sendMessage(text = elements.prompt.value) {
   }
 }
 
-elements.send.addEventListener("click", () => sendMessage());
-elements.prompt.addEventListener("keydown", (event) => {
+function switchToDiff(path) {
+  if (changes.has(path)) {
+    renderDiff(changes.get(path));
+    // Remove active class from other tabs
+    elements.changeTabs.querySelectorAll(".change-tab").forEach(tab => {
+      tab.classList.remove("active");
+      tab.setAttribute("aria-selected", "false");
+    });
+  }
+}
+
+function switchToFileContent(path) {
+  loadFileContent(path).then(content => {
+    elements.fileContentDisplay.textContent = content || (elements.fileContentDisplay.textContent || "");
+  }).catch(error => {
+    chatMessage("assistant", `Error loading file: ${error.message}`, true);
+  });
+}
+
+async function openFileInEditor(path) {
+  if (!changes.has(path)) {
+    const response = await fetch(`/api/file?path=${encodeURIComponent(path)}`);
+    if (!response.ok) {
+      const data = await response.json();
+      activity(`Could not read file ${path}: ${data.error || 'Unknown error'}`, "failure");
+      return;
+    }
+    switchToFileContent(path);
+  } else {
+    switchToFileContent(path);
+  }
+}
+
+async function switchToDiffOrContent(path) {
+  if (changes.has(path)) {
+    renderDiff(changes.get(path));
+  } else {
+    await openFileInEditor(path);
+  }
+}
+
+elements.send?.addEventListener("click", () => sendMessage());
+elements.prompt?.addEventListener("keydown", (event) => {
   if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
     sendMessage();
@@ -356,7 +437,8 @@ document.querySelectorAll(".suggestion").forEach((button) => {
   button.addEventListener("click", () => sendMessage(button.dataset.prompt));
 });
 $("#new-chat").addEventListener("click", newChat);
-$("#clear-chat").addEventListener("click", newChat);
+elements.cancel?.addEventListener("click", cancelTask);
+$("#clear-chat")?.addEventListener("click", newChat);
 $("#clear-activity").addEventListener("click", () => {
   elements.activity.replaceChildren();
   const note = document.createElement("div");
@@ -378,7 +460,7 @@ function newChat() {
   const welcome = document.createElement("div");
   welcome.className = "welcome";
   welcome.id = "welcome";
-  welcome.innerHTML = '<div class="welcome-icon">✳</div><div class="welcome-title">Build with your local AI</div><p>Ask a question or describe a change. The assistant will inspect your project, make real edits, and show each diff.</p><button class="suggestion" data-prompt="Explore this project and give me a concise overview."><span>↗</span> Explore this project</button>';
+  welcome.innerHTML = '<div class="welcome-icon">\u2733</div><div class="welcome-title">Build with your local AI</div><p>Ask a question or describe a change. The assistant will inspect your project, make real edits, and show each diff.</p><button class="suggestion" data-prompt="Explore this project and give me a concise overview."><span>\u2197</span> Explore this project</button>';
   elements.conversation.append(welcome);
   welcome.querySelector(".suggestion").addEventListener("click", (event) => sendMessage(event.currentTarget.dataset.prompt));
   elements.activity.replaceChildren();
@@ -386,6 +468,7 @@ function newChat() {
   changes.clear();
   elements.changeTabs.replaceChildren();
   elements.changeView.hidden = true;
+  elements.editorContainer.style.display = "none";
   elements.empty.hidden = false;
   elements.activeFileLabel.textContent = "Session";
   loadStatus();
