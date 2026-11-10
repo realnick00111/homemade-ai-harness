@@ -29,7 +29,7 @@ MAX_READ_CHARS = 7_000
 MAX_READ_INSTRUCTIONS = 1_600
 MAX_RESPONSE_RETRIES = 2
 MAX_PROJECT_FILES = 300
-MAX_AGENT_STEPS = 20
+MAX_AGENT_STEPS = 100000
 MAX_ACTIONS_PER_STEP = 6
 MAX_TEST_SECONDS = 120
 MAX_TOOL_OUTPUT = 10_000
@@ -831,15 +831,30 @@ def compact_history(messages: list[dict[str, str]]) -> None:
 def request_agent_response(
     model: str,
     messages: list[dict[str, str]],
+    step: int,
 ) -> tuple[str, dict[str, object]]:
     for attempt in range(MAX_RESPONSE_RETRIES + 1):
-        response = ollama.chat(
+        stream = ollama.chat(
             model=model,
             messages=messages,
             format=RESPONSE_FORMAT,
-            think=False,
+            think=True,
+            stream=True,
         )
-        raw_response = response.message.content
+        response_parts = []
+        thinking_started = False
+        for chunk in stream:
+            thinking = getattr(chunk.message, 'thinking', None)
+            if thinking:
+                if not thinking_started:
+                    print(f'({step})# Thinking: ', end='', flush=True)
+                    thinking_started = True
+                print(thinking, end='', flush=True)
+            if chunk.message.content:
+                response_parts.append(chunk.message.content)
+        if thinking_started:
+            print()
+        raw_response = ''.join(response_parts)
         try:
             answer = json.loads(raw_response)
             if (
@@ -875,7 +890,10 @@ def request_agent_response(
                     'no prose, markdown fences, or extra fields.'
                 ),
             })
-            print(f'Model response was invalid; retrying ({attempt + 1}/{MAX_RESPONSE_RETRIES}).')
+            print(
+                f'({step})# Model response was invalid; retrying '
+                f'({attempt + 1}/{MAX_RESPONSE_RETRIES}).'
+            )
 
     raise RuntimeError('Unreachable response retry state.')
 
@@ -904,19 +922,21 @@ def run_agent(root: Path, model: str, goal: str, max_steps: int) -> None:
 
     for step in range(1, max_steps + 1):
         compact_history(messages)
-        print(f'\nAgent step {step}/{max_steps}')
-        raw_response, answer = request_agent_response(model, messages)
+        print(f'\n({step})# Harness step {step}/{max_steps}', flush=True)
+        raw_response, answer = request_agent_response(model, messages, step)
 
         messages.append({'role': 'assistant', 'content': raw_response})
         if answer['message']:
-            print(f'Agent> {answer["message"]}')
+            print(f'({step})# Agent: {answer["message"]}')
 
         results = []
         for action in answer['actions']:
+            action_name = action.get('type', 'unknown') if isinstance(action, dict) else 'unknown'
+            print(f'({step})# Running {action_name}', flush=True)
             result = execute_action(root, action, read_snapshots, skills, web_requests)
             if len(result) > MAX_TOOL_OUTPUT:
                 result = result[:MAX_TOOL_OUTPUT] + '\n[Tool output truncated.]'
-            print(f'  {result.splitlines()[0]}')
+            print(f'({step})# {action_name}: {result.splitlines()[0]}')
             results.append({'action': action, 'result': result})
 
         if answer['done']:

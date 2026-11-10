@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#181818">
+  <title>AI Harness — VS Code</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <header class="titlebar">
+      <a class="brand" href="/" aria-label="Home"><span class="brand-mark">⌘</span><span>AI Harness</span></a>
+      <div class="window-title"><span id="project-name">Opening workspace…</span><span class="title-divider">›</span><span>AI Assistant</span></div>
+      <div class="title-actions"><span class="connection-dot" id="connection-dot"></span><span id="connection-label">Connecting</span><button class="icon-button" id="new-chat" title="Start a new chat" aria-label="Start a new chat">＋</button></div>
+    </header>
+
+    <div class="workbench">
+      <nav class="activity-rail" aria-label="Activity">
+        <button class="rail-button active" title="Explorer" aria-label="Explorer"><svg viewBox="0 0 24 24"><path d="M3 5.5 9 4l6 1.5L21 4v14l-6 2-6-2-6 2zM9 4v14m6-12v14"/></svg></button>
+        <button class="rail-button" title="Search" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></button>
+        <span class="rail-spacer"></span><button class="rail-button" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.7 1l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.7-1l-1.7.7-1.4-2.4 1.4-1.1a7 7 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.7-1l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.7 1l1.7-.7 1.4 2.4-1.4 1.1a7 7 0 0 1 0 2Z" transform="translate(-1 -2)"/></svg></button>
+      </nav>
+
+      <aside class="explorer">
+        <div class="section-heading">EXPLORER <button class="quiet-button" id="refresh-files" title="Refresh files">↻</button></div>
+        <button class="tree-heading"><span class="chevron">⌄</span><span id="tree-project-name">WORKSPACE</span></button>
+        <div class="file-tree" id="file-tree"><div class="loading-note">Loading project files…</div></div>
+        <div class="explorer-bottom"><span class="chevron">⌄</span> OUTLINE</div>
+      </aside>
+
+      <aside class="chat-panel">
+        <div class="panel-heading"><span>CHAT</span><button class="quiet-button" id="clear-chat" title="New conversation">↻</button></div>
+        <div class="model-row"><span class="model-indicator"></span><select id="model-select" aria-label="Ollama model"><option value="qwen3.5:9b">qwen3.5:9b</option></select><span class="chevron">⌄</span></div>
+        <main class="conversation" id="conversation" aria-live="polite">
+          <div class="welcome" id="welcome">
+            <div class="welcome-icon">✳</div>
+            <div class="welcome-title">Build with your local AI</div>
+            <p>Ask a question or describe a change. The assistant will inspect your project, make real edits, and show each diff.</p>
+            <button class="suggestion" data-prompt="Explore this project and give me a concise overview."><span>↗</span> Explore this project</button>
+            <button class="suggestion" data-prompt="Review this project for the most important improvements."><span>⌕</span> Find ways to improve</button>
+          </div>
+        </main>
+        <div class="composer-wrap"><div class="composer">
+          <textarea id="prompt-input" rows="3" placeholder="Ask anything, or describe a change…" aria-label="Message the AI assistant"></textarea>
+          <div class="composer-footer"><span class="composer-hint">Enter to send · Shift + Enter for newline</span><button id="send-button" class="send-button" title="Send message" aria-label="Send message"><svg viewBox="0 0 20 20"><path d="M3 10h13M10 3l7 7-7 7"/></svg></button></div>
+        </div><div class="privacy-note"><span>♧</span> Runs locally with Ollama</div></div>
+      </aside>
+
+      <main class="editor">
+        <div class="editor-tabs"><div class="editor-tab active"><span class="tab-icon">✳</span> AI Session <span class="tab-close">×</span></div><div class="editor-tab-spacer"></div><button class="quiet-button" id="toggle-activity" title="Toggle assistant activity">☷</button></div>
+        <div class="editor-toolbar"><div class="breadcrumbs">AI Harness <span>›</span> <span id="active-file-label">Session</span></div><span id="task-status" class="task-status"><i></i> Ready</span></div>
+        <section class="editor-content">
+          <div id="empty-editor" class="empty-editor"><div class="welcome-orbit"><span>✳</span></div><h1>Your workspace, with an agent</h1><p>Describe a task in chat. Your assistant’s real tool activity and code changes will appear here.</p><div class="shortcut-hint"><kbd>Ctrl</kbd><span>+</span><kbd>Enter</kbd><span>to send a task</span></div></div>
+          <div id="change-view" class="change-view" hidden><div class="change-tabs" id="change-tabs" role="tablist" aria-label="Changed files"></div><div class="change-header"><div class="change-title-row"><span class="filetype-icon" id="change-file-icon">JS</span><strong id="change-file-name">—</strong><span id="change-counts" class="change-counts"></span></div><span id="change-path" class="change-path"></span></div><div id="change-list" class="diff"></div></div>
+        </section>
+        <section class="activity-panel" id="activity-panel"><div class="activity-panel-heading"><span>ASSISTANT ACTIVITY</span><button class="quiet-button" id="clear-activity" title="Clear activity">⌫</button></div><div id="activity-list" class="activity-list"><div class="activity-empty"><span>◷</span> Activity will appear when you start a task.</div></div></section>
+        <footer class="statusbar"><span class="status-remote">⑂ <span id="status-project">Local workspace</span></span><span><span id="status-connection">◉ Ollama</span><span> UTF-8</span><span> Python</span></span></footer>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
